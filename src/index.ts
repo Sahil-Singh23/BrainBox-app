@@ -112,12 +112,25 @@ app.get("/api/v1/content", authMiddleware, async(req,res)=>{
     if (!req.userId) {
         return res.status(401).json({ message: "User ID not found" });
     }
-    const data = await contentModel.find({userId:req.userId})
+    const data = await contentModel.find({userId:req.userId}).populate("userId","username");
 
-    
+    return res.json({
+        data
+    })
 });
-app.delete("/api/v1/content", (req,res)=>{
- 
+
+
+app.delete("/api/v1/content", async(req,res)=>{
+    const contendId = req.body.contentId;
+     if (!req.userId) {
+        return res.status(401).json({ message: "User ID not found" });
+    }
+    await contentModel.deleteOne({_id:contendId,userId:req.userId});
+
+    return res.json({
+        message: "deleted content"
+    })
+
 });
 app.post("/api/v1/brain/share", (req,res)=>{
  
