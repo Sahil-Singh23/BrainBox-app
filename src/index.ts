@@ -2,11 +2,13 @@ import express from "express";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken"
 import { userModel } from "./db.js";
-
+import bcrypt from 'bcrypt';
+import * as dotenv from 'dotenv';
+import {z} from 'zod';
+dotenv.config();
 
 const app = express();
-app.use(express.json());
-
+app.use(express.json());  
 
 app.post("api/v1/signup", async(req,res)=>{
     const username = req.body.username;
