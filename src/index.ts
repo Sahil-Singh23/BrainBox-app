@@ -95,6 +95,7 @@ app.post("/api/v1/signin", async(req,res)=>{
 app.post("/api/v1/content",authMiddleware, async(req,res)=>{
     const link: string= req.body.link;
     const type: string = req.body.type;
+    const title: string = req.body.title;
 
     if (!req.userId) {
         return res.status(401).json({ message: "User ID not found" });
@@ -102,6 +103,7 @@ app.post("/api/v1/content",authMiddleware, async(req,res)=>{
     await contentModel.create({
         link,
         type,
+        title,
         userId:req.userId,
         tags:[],
     })
@@ -124,7 +126,7 @@ app.delete("/api/v1/content", async(req,res)=>{
     const contendId = req.body.contentId;
      if (!req.userId) {
         return res.status(401).json({ message: "User ID not found" });
-    }
+    } 
     await contentModel.deleteOne({_id:contendId,userId:req.userId});
 
     return res.json({
