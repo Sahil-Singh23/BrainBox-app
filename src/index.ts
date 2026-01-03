@@ -7,6 +7,7 @@ import * as dotenv from 'dotenv';
 import {z} from 'zod';
 import cors from 'cors';
 dotenv.config();
+const jwt_secret = process.env.jwt_secret;
 
 const dbUrl = process.env.DB_URL;
 if (!dbUrl) {
@@ -62,8 +63,31 @@ app.post("/api/v1/signup", async(req,res)=>{
 });
 
 
-app.post("/api/v1/signin", (req,res)=>{
+app.post("/api/v1/signin", async(req,res)=>{
+    const parsed = signSchema.safeParse(req.body);
+    if(!parsed.success){
+        return res.status(400).json({
+            message: "Validation error",
+            errors: parsed.error.issues,
+        });
+    }
 
+    const username = parsed.data.username;
+    const password = parsed.data.password;
+
+    const exsistingUser = await userModel.findOne({username});
+
+    if(!exsistingUser){
+        return res.status(401).json({message:"Invalid username"})
+    }
+
+    const passwordMatch = await bcrypt.compare(password,exsistingUser.password);
+    if(!passwordMatch){
+        return res.status(401).json({message:"Invalid username"})
+    }else{
+        const token = jwt.sign({username:exsistingUser.username},jwt_secret!)
+        res.json({message:"SignIn successful",token})
+    }
     
  
 });
