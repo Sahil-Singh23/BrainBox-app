@@ -1,7 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken"
-import { userModel } from "./db.js";
+import { contentModel, userModel } from "./db.js";
 import bcrypt from 'bcrypt';
 import {z} from 'zod';
 import cors from 'cors';
@@ -86,17 +86,35 @@ app.post("/api/v1/signin", async(req,res)=>{
     if(!passwordMatch){
         return res.status(401).json({message:"Invalid password"})
     }else{
-        const token = jwt.sign({id:exsistingUser._id},jwt_secret!)
+        const token = jwt.sign({id:exsistingUser._id },jwt_secret!)
         res.json({message:"SignIn successful",token})
     }
 });
 
 
 app.post("/api/v1/content",authMiddleware, async(req,res)=>{
-    
+    const link: string= req.body.link;
+    const type: string = req.body.type;
+
+    if (!req.userId) {
+        return res.status(401).json({ message: "User ID not found" });
+    }
+    await contentModel.create({
+        link,
+        type,
+        userId:req.userId,
+        tags:[],
+    })
+
+    return res.json({message:"Created a new content entry "}) 
 });
-app.get("/api/v1/content", (req,res)=>{
- 
+app.get("/api/v1/content", authMiddleware, async(req,res)=>{
+    if (!req.userId) {
+        return res.status(401).json({ message: "User ID not found" });
+    }
+    const data = await contentModel.find({userId:req.userId})
+
+    
 });
 app.delete("/api/v1/content", (req,res)=>{
  
