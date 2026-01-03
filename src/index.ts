@@ -3,9 +3,10 @@ import mongoose from "mongoose";
 import jwt from "jsonwebtoken"
 import { userModel } from "./db.js";
 import bcrypt from 'bcrypt';
-import * as dotenv from 'dotenv';
 import {z} from 'zod';
 import cors from 'cors';
+import authMiddleware from "./middleware.js";
+import * as dotenv from 'dotenv';
 dotenv.config();
 const jwt_secret = process.env.jwt_secret;
 
@@ -83,16 +84,16 @@ app.post("/api/v1/signin", async(req,res)=>{
 
     const passwordMatch = await bcrypt.compare(password,exsistingUser.password);
     if(!passwordMatch){
-        return res.status(401).json({message:"Invalid username"})
+        return res.status(401).json({message:"Invalid password"})
     }else{
-        const token = jwt.sign({username:exsistingUser.username},jwt_secret!)
+        const token = jwt.sign({id:exsistingUser._id},jwt_secret!)
         res.json({message:"SignIn successful",token})
     }
-    
- 
 });
-app.post("/api/v1/content", (req,res)=>{
- 
+
+
+app.post("/api/v1/content",authMiddleware, async(req,res)=>{
+    
 });
 app.get("/api/v1/content", (req,res)=>{
  
