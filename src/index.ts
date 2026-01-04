@@ -1,12 +1,14 @@
 import express from "express";
-import mongoose from "mongoose";
+import mongoose, { Query } from "mongoose";
 import jwt from "jsonwebtoken"
-import { contentModel, userModel } from "./db.js";
+import { contentModel, linkModel, userModel } from "./db.js";
 import bcrypt from 'bcrypt';
 import {z} from 'zod';
 import cors from 'cors';
 import authMiddleware from "./middleware.js";
 import * as dotenv from 'dotenv';
+import random from "./utils.js";
+
 dotenv.config();
 const jwt_secret = process.env.jwt_secret;
 
@@ -62,8 +64,6 @@ app.post("/api/v1/signup", async(req,res)=>{
     return;
   }
 });
-
-
 app.post("/api/v1/signin", async(req,res)=>{
     const parsed = signSchema.safeParse(req.body);
     if(!parsed.success){
@@ -90,8 +90,6 @@ app.post("/api/v1/signin", async(req,res)=>{
         res.json({message:"SignIn successful",token})
     }
 });
-
-
 app.post("/api/v1/content",authMiddleware, async(req,res)=>{
     const link: string= req.body.link;
     const type: string = req.body.type;
@@ -103,7 +101,7 @@ app.post("/api/v1/content",authMiddleware, async(req,res)=>{
     await contentModel.create({
         link,
         type,
-        title,
+        title, 
         userId:req.userId,
         tags:[],
     })
@@ -120,8 +118,6 @@ app.get("/api/v1/content", authMiddleware, async(req,res)=>{
         data
     })
 });
-
-
 app.delete("/api/v1/content", async(req,res)=>{
     const contendId = req.body.contentId;
      if (!req.userId) {
@@ -134,11 +130,40 @@ app.delete("/api/v1/content", async(req,res)=>{
     })
 
 });
-app.post("/api/v1/brain/share", (req,res)=>{
  
+app.post("/api/v1/brain/share", authMiddleware ,async(req,res)=>{
+    const share:boolean = req.body.share; 
+    
+    if(share){
+        let hash = random(10);
+        await linkModel.create({
+            userId: req.userId!,    
+            hash,
+        })
+    }else{
+        await linkModel.deleteOne({
+            userId: req.userId!   
+        })
+    }
 });
-app.get("/api/v1/brain/share", (req,res)=>{
- 
+app.get("/api/v1/brain/:sharlink", async(req,res)=>{
+    const shareLink = req.params.sharlink;
+
+    const data = await linkModel.findOne({
+        hash:shareLink
+    }).populate("userId","username");
+
+    if(!data){
+        return res.status(411).json({
+            message: "User not  found"
+        })
+    }
+    return res.status(200).json({
+        username: data?.userId, 
+        data
+    })
+
+
 });
 
 app.listen(2000, () => {
