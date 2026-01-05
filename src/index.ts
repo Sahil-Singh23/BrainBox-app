@@ -112,7 +112,7 @@ app.get("/api/v1/content", authMiddleware, async(req,res)=>{
     if (!req.userId) {
         return res.status(401).json({ message: "User ID not found" });
     }
-    const data = await contentModel.find({userId:req.userId}).populate("userId","username");
+    const data = await contentModel.findOne({userId:req.userId}).populate("userId","username");
 
     return res.json({
         data
@@ -144,7 +144,7 @@ app.post("/api/v1/brain/share", authMiddleware ,async(req,res)=>{
         await linkModel.deleteOne({
             userId: req.userId!   
         })
-    }
+    } 
 });
 app.get("/api/v1/brain/:sharlink", async(req,res)=>{
     const shareLink = req.params.sharlink;
