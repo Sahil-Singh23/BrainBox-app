@@ -133,9 +133,14 @@ app.delete("/api/v1/content", async(req,res)=>{
  
 app.post("/api/v1/brain/share", authMiddleware ,async(req,res)=>{
     const share:boolean = req.body.share; 
+    let hash;
     
     if(share){
-        let hash = random(10);
+        const exsistingLink = await linkModel.findOne({userId:new mongoose.Types.ObjectId(req.userId)});
+        if(exsistingLink){
+            return res.json({hash:exsistingLink.hash})
+        }
+        hash = random(10);
         await linkModel.create({
             userId: req.userId!,    
             hash,
@@ -144,7 +149,9 @@ app.post("/api/v1/brain/share", authMiddleware ,async(req,res)=>{
         await linkModel.deleteOne({
             userId: req.userId!   
         })
+        return res.json({message:"link removed"})
     } 
+    return res.json({hash})
 });
 app.get("/api/v1/brain/:sharlink", async(req,res)=>{
     const shareLink = req.params.sharlink;
@@ -153,6 +160,8 @@ app.get("/api/v1/brain/:sharlink", async(req,res)=>{
         hash:shareLink
     }).populate("userId","username");
 
+    const content = await contentModel.find({userId:new mongoose.Types.ObjectId(data?.userId)});
+
     if(!data){
         return res.status(411).json({
             message: "User not  found"
@@ -160,7 +169,7 @@ app.get("/api/v1/brain/:sharlink", async(req,res)=>{
     }
     return res.status(200).json({
         username: data?.userId, 
-        data
+        content
     })
 
 
