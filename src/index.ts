@@ -175,6 +175,32 @@ app.get("/api/v1/brain/:sharlink", async(req,res)=>{
 
 });
 
+app.post("/api/v1/resolve-pinterest", async(req,res)=>{
+    const shortUrl = req.body.url;
+
+    if(!shortUrl || !shortUrl.includes('pin.it')){
+        return res.status(400).json({message: "Invalid Pinterest short URL"});
+    }
+
+    try {
+        const response = await fetch(shortUrl, {
+            method: 'HEAD',
+            redirect: 'follow'
+        });
+        
+        const fullUrl = response.url;
+        
+        if(fullUrl.includes('pinterest.com')){
+            return res.json({fullUrl});
+        } else {
+            return res.status(400).json({message: "Could not resolve to Pinterest URL"});
+        }
+    } catch (error) {
+        console.error('Error resolving Pinterest URL:', error);
+        return res.status(500).json({message: "Failed to resolve URL"});
+    }
+});
+
 app.listen(2000, () => {
   console.log("Server running on port 2000");
 });
